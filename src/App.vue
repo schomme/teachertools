@@ -3,8 +3,17 @@
     <div class="col">
       <div class="m-3">
         <Panel header="Einstellungen" toggleable collapsed>
-          <Panel v-for="system in Settings" :key="system.display" :header="system.display" toggleable collapsed>
-            <div v-for="(grade, index) in system.grades" :key="grade.minpercent">
+          <Panel
+            v-for="system in Settings"
+            :key="system.display"
+            :header="system.display"
+            toggleable
+            collapsed
+          >
+            <div
+              v-for="(grade, index) in system"
+              :key="grade.minpercent"
+            >
               <table>
                 <tbody>
                   <tr>
@@ -24,26 +33,24 @@
                       <InputNumber
                         :id="'minpercent_' + index"
                         v-model="grade.minpercent"
-                        :show-buttons="
-                          index < system.grades.length - 1
-                        "
+                        :show-buttons="index < system.length - 1"
                         :step="1"
                         :max="
                           index == 0
                             ? 100
-                            : system.grades[index - 1].minpercent - 1
+                            : system[index - 1].minpercent - 1
                         "
                         :min="
-                          index == system.grades.length - 1
+                          index == system.length - 1
                             ? 0
-                            : system.grades[index + 1].minpercent + 1
+                            : system[index + 1].minpercent + 1
                         "
                       ></InputNumber>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <Divider v-if="index < system.grades.length - 1" />
+              <Divider v-if="index < system.length - 1" />
             </div>
           </Panel>
         </Panel>
@@ -58,6 +65,7 @@
                   <InputNumber
                     id="maxpoints"
                     v-model="PercentCalc.maxpoints"
+                    show-buttons :min="0"
                   ></InputNumber>
                 </td>
               </tr>
@@ -67,6 +75,7 @@
                   <InputNumber
                     id="points"
                     v-model="PercentCalc.points"
+                    show-buttons :min="0" :max="PercentCalc.maxpoints"
                   ></InputNumber>
                 </td>
               </tr>
@@ -76,10 +85,16 @@
                   <InputNumber
                     id="percent"
                     :readonly="true"
-                    :model-value="grade.percent"
+                    :model-value="result.percent"
                     suffix="%"
                   ></InputNumber>
-                  <InlineMessage severity="info">{{ grade.grade.display }}</InlineMessage>
+                  <InlineMessage
+                    v-for="g in result.grades"
+                    :key="g.display"
+                    severity="info"
+                    v-tooltip.bottom="'>='+ g.grade.minpercent+'%'"
+                    >{{ g.grade.display }}</InlineMessage
+                  >
                 </td>
               </tr>
             </tbody>
@@ -98,91 +113,31 @@ import Panel from "primevue/panel";
 import Divider from "primevue/divider";
 import InlineMessage from "primevue/inlinemessage";
 
+import { Gradesettings } from "./classes/Gradesettings";
+
 const PercentCalc = reactive({
   maxpoints: 100,
   points: 70,
 });
 
-const Settings = reactive([
-  {
-    display: "Spezial",
+const Settings = reactive(new Gradesettings());
+
+const result = computed(() => {
+  var p = (PercentCalc.points / PercentCalc.maxpoints) * 100;
+  return {
+    percent: p,
     grades: [
       {
-        display: "E1",
-        minpercent: 92,
+        display: Settings.normal.display,
+        grade: Settings.normal.GetGrade(p),
       },
       {
-        display: "E2",
-        minpercent: 81,
-      },
-      {
-        display: "E3",
-        minpercent: 75,
-      },
-      {
-        display: "G3",
-        minpercent: 50,
-      },
-      {
-        display: "G4",
-        minpercent: 40,
-      },
-      {
-        display: "G5",
-        minpercent: 25,
-      },
-      {
-        display: "G6",
-        minpercent: 0,
+        display: Settings.special.display,
+        grade: Settings.special.GetGrade(p),
       },
     ],
-  },
-  {
-    display: "Normal",
-    grades: [
-      {
-        display: "1",
-        minpercent: 92,
-      },
-      {
-        display: "2",
-        minpercent: 81,
-      },
-      {
-        display: "3",
-        minpercent: 75,
-      },
-      {
-        display: "4",
-        minpercent: 50,
-      },
-      {
-        display: "5",
-        minpercent: 40,
-      },
-      {
-        display: "6",
-        minpercent: 0,
-      },
-    ],
-  },
-]);
-
-const grade = computed(
-  () => {
-    var p = PercentCalc.points / PercentCalc.maxpoints * 100
-    var grade = GetGrade(Settings[0].grades, p)
-    return {percent: p, grade: grade}
-  });
-
-const GetGrade = (grades, p) => {
-  for(let i = 0; i < grades.length; i++){
-    if(p >= grades[i].minpercent) return grades[i]
-  }
-  return grades[grades.length-1]
-}
-
-
+  };
+});
 </script>
 
 <style>
