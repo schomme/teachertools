@@ -10,10 +10,33 @@
             toggleable
             collapsed
           >
-            <div
-              v-for="(grade, index) in system"
-              :key="grade.minpercent"
-            >
+            <div>
+              <table>
+                <tr>
+                  <td><label>Max. Prozent</label></td>
+                  <td>
+                    <InputNumber
+                      v-model="system.maxpercent"
+                      suffix="%"
+                      show-buttons
+                      :min="system[0].minpercent + 1"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td><label>Max. Punkte</label></td>
+                  <td>
+                    <InputNumber
+                      v-model="system.maxpoints"
+                      show-buttons
+                      :min="1"
+                    />
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <Divider />
+            <div v-for="(grade, index) in system" :key="grade.minpercent">
               <table>
                 <tbody>
                   <tr>
@@ -37,7 +60,7 @@
                         :step="1"
                         :max="
                           index == 0
-                            ? 100
+                            ? system.maxpercent - 1
                             : system[index - 1].minpercent - 1
                         "
                         :min="
@@ -45,7 +68,17 @@
                             ? 0
                             : system[index + 1].minpercent + 1
                         "
+                        suffix="%"
                       ></InputNumber>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><label>Min. Punkte</label></td>
+                    <td>
+                      <InputNumber
+                        :model-value="system.GetPoints(grade.minpercent)"
+                        readonly
+                      />
                     </td>
                   </tr>
                 </tbody>
@@ -58,43 +91,48 @@
       <div class="m-3">
         <Panel header="Prozentrechnung" toggleable>
           <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Normal</th>
+                <th>Special</th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
-                <td><label for="maxpoints">Max. Punktzahl</label></td>
-                <td>
-                  <InputNumber
-                    id="maxpoints"
-                    v-model="PercentCalc.maxpoints"
-                    show-buttons :min="0"
-                  ></InputNumber>
-                </td>
+                <td>Max. Punkte:</td>
+
+                <td>{{ Settings.normal.maxpoints }} ({{ Settings.normal.maxpercent }}%)</td>
+                <td>{{ Settings.special.maxpoints }} ({{ Settings.special.maxpercent }}%)</td>
               </tr>
               <tr>
-                <td><label for="points">Punkte</label></td>
-                <td>
+                <td><label for="points">Punkte:</label></td>
+                <td colspan="2">
                   <InputNumber
                     id="points"
                     v-model="PercentCalc.points"
-                    show-buttons :min="0" :max="PercentCalc.maxpoints"
+                    show-buttons
+                    :min="0"
+                    :max="PercentCalc.maxpoints"
                   ></InputNumber>
                 </td>
               </tr>
               <tr>
-                <td><label for="percent">Prozent</label></td>
+                <td>Prozent:</td>
                 <td>
-                  <InputNumber
-                    id="percent"
-                    :readonly="true"
-                    :model-value="result.percent"
-                    suffix="%"
-                  ></InputNumber>
-                  <InlineMessage
-                    v-for="g in result.grades"
-                    :key="g.display"
-                    severity="info"
-                    v-tooltip.bottom="'>='+ g.grade.minpercent+'%'"
-                    >{{ g.grade.display }}</InlineMessage
-                  >
+                  {{ Settings.normal.GetPercent(PercentCalc.points, 1) }}%
+                </td>
+                <td>
+                  {{ Settings.special.GetPercent(PercentCalc.points, 1) }}%
+                </td>
+              </tr>
+              <tr>
+                <td>Note:</td>
+                <td>
+                  <InlineMessage severity="info" v-tooltip.bottom="Settings.normal.GetGrade(PercentCalc.points).minpercent + '%'">{{ Settings.normal.GetGrade(PercentCalc.points).display }}</InlineMessage>
+                </td>
+                <td>
+                  <InlineMessage severity="info">{{ Settings.special.GetGrade(PercentCalc.points).display }}</InlineMessage>
                 </td>
               </tr>
             </tbody>
@@ -106,7 +144,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from "vue";
+import { reactive } from "vue";
 import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
 import Panel from "primevue/panel";
@@ -117,29 +155,20 @@ import { Gradesettings } from "./classes/Gradesettings";
 
 const PercentCalc = reactive({
   maxpoints: 100,
-  points: 70,
+  points: 20,
 });
 
 const Settings = reactive(new Gradesettings());
 
-const result = computed(() => {
-  var p = (PercentCalc.points / PercentCalc.maxpoints) * 100;
-  return {
-    percent: p,
-    grades: [
-      {
-        display: Settings.normal.display,
-        grade: Settings.normal.GetGrade(p),
-      },
-      {
-        display: Settings.special.display,
-        grade: Settings.special.GetGrade(p),
-      },
-    ],
-  };
-});
 </script>
 
 <style>
 @import "primevue/resources/themes/bootstrap4-dark-blue/theme.css";
+
+td{
+  text-align: center;
+}
+table{
+  border: 1cap;
+}
 </style>
