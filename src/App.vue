@@ -141,6 +141,7 @@
       </div>
     </div>
   </div>
+  <label>Version {{ version }}</label>
 </template>
 
 <script setup>
@@ -149,9 +150,9 @@ import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
 import Panel from "primevue/panel";
 import Divider from "primevue/divider";
-import InlineMessage from "primevue/inlinemessage";
-
+import InlineMessage from "primevue/inlinemessage"; 
 import { Gradesettings } from "./classes/Gradesettings";
+import { version } from "../package.json";
 
 const PercentCalc = reactive({
   maxpoints: 100,
